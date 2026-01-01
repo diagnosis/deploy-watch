@@ -1,0 +1,44 @@
+package application
+
+import (
+	"net/http"
+	"time"
+
+	"github.com/diagnosis/deploy-watch/internal/middleware"
+	"github.com/go-chi/chi/v5"
+	chimiddleware "github.com/go-chi/chi/v5/middleware"
+)
+
+func (app *Application) SetupRouter() *chi.Mux {
+	r := chi.NewRouter()
+
+	// Global middleware
+	r.Use(middleware.CorrelationMiddleware)
+	r.Use(chimiddleware.Logger)
+	r.Use(chimiddleware.Recoverer)
+	r.Use(chimiddleware.Timeout(60 * time.Second))
+	r.Use(middleware.CorsHandler())
+
+	// Public routes
+	r.Get("/auth/github/login", app.authHandler.HandleLogin)
+	r.Get("/auth/github/callback", app.authHandler.HandleCallback)
+	r.Post("/auth/logout", app.authHandler.HandleLogout)
+	r.Post("/webhook", app.webhookHandler.HandleWebhook)
+
+	// Protected routes
+	r.Group(func(r chi.Router) {
+		r.Use(middleware.RequireAuth(app.userStore))
+
+		r.Get("/api/me", app.authHandler.HandleMe)
+		r.Get("/deploys", app.authHandler.HandleGetDeploys)
+		r.Get("/events", app.sseHandler.HandleSSE)
+
+	})
+	r.Post("/test/broadcast", func(w http.ResponseWriter, r *http.Request) {
+		app.broadcaster.Broadcast("🚀 Test broadcast message!")
+		w.Write([]byte("Broadcasted!"))
+	})
+
+	return r
+
+}
