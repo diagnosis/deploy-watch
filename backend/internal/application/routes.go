@@ -24,7 +24,7 @@ func (app *Application) SetupRouter() *chi.Mux {
 
 		r.Get("/auth/github/login", app.authHandler.HandleLogin)
 		r.Get("/auth/github/callback", app.authHandler.HandleCallback)
-		r.Post("/auth/logout", app.authHandler.HandleLogout)
+		r.Get("/auth/logout", app.authHandler.HandleLogout)
 		r.Post("/webhook", app.webhookHandler.HandleWebhook)
 	})
 

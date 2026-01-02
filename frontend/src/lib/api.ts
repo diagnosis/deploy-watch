@@ -53,8 +53,7 @@ export const appClient = {
 
     getLoginUrl: () => `${API_URL}/auth/github/login`,
 
-    logout: async () => {
-        await apiClient.post("/auth/logout");
-        window.location.href = "/";  // ✅ Redirect to home
+    logout: () => {
+        window.location.href = `${API_URL}/auth/logout`;
     }
 };
