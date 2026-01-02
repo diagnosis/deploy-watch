@@ -25,6 +25,16 @@ export default defineConfig({
         changeOrigin: true,
         secure: true,
       },
+      '/deploys': {
+        target: 'https://backend-cold-bush-2228.fly.dev',
+        changeOrigin: true,
+        secure: true,
+      },
+      '/events': {
+        target: 'https://backend-cold-bush-2228.fly.dev',
+        changeOrigin: true,
+        secure: true,
+      },
     },
   },
 })
