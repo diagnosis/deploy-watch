@@ -6,25 +6,55 @@ const API_URL = import.meta.env.PROD
 
 export function useSSE(onMessage: (event: MessageEvent) => void) {
     const onMessageRef = useRef(onMessage);
+    const reconnectTimeoutRef = useRef<number | null>(null);
 
     useEffect(() => {
         onMessageRef.current = onMessage;
     }, [onMessage]);
 
     useEffect(() => {
-        const url = `${API_URL}/api/events`;
-        const eventSource = new EventSource(url, {
-            withCredentials: true
-        });
+        let eventSource: EventSource | null = null;
+        let isMounted = true;
 
-        eventSource.onmessage = (event) => onMessageRef.current(event)
+        const connect = () => {
+            if (!isMounted) return;
 
-        eventSource.onerror = (err) => {
-            console.error("SSE connection error", err)
-        }
+            const url = `${API_URL}/api/events`;
+            eventSource = new EventSource(url, {
+                withCredentials: true
+            });
+
+            eventSource.onopen = () => {
+                console.log("SSE connected");
+            };
+
+            eventSource.onmessage = (event) => {
+                if (isMounted) {
+                    onMessageRef.current(event);
+                }
+            };
+
+            eventSource.onerror = (err) => {
+                console.error("SSE connection error", err);
+                eventSource?.close();
+
+                if (isMounted) {
+                    reconnectTimeoutRef.current = window.setTimeout(() => {
+                        console.log("Reconnecting SSE...");
+                        connect();
+                    }, 3000);
+                }
+            };
+        };
+
+        connect();
 
         return () => {
-            eventSource.close()
-        }
+            isMounted = false;
+            if (reconnectTimeoutRef.current) {
+                clearTimeout(reconnectTimeoutRef.current);
+            }
+            eventSource?.close();
+        };
     }, [])
 }
