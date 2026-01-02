@@ -25,7 +25,7 @@ func SetSessionCookie(w http.ResponseWriter, userID uuid.UUID) {
 		Path:     "/",
 		MaxAge:   86400 * 30,
 		HttpOnly: true,
-		SameSite: http.SameSiteLaxMode,
+		SameSite: http.SameSiteNoneMode,
 		Secure:   os.Getenv("APP_ENV") == "prod",
 	})
 }
@@ -47,7 +47,7 @@ func ClearSessionCookie(w http.ResponseWriter) {
 		Value:    "",
 		Path:     "/",
 		MaxAge:   -1,
-		SameSite: http.SameSiteLaxMode,
+		SameSite: http.SameSiteNoneMode,
 		HttpOnly: true,
 	})
 }
