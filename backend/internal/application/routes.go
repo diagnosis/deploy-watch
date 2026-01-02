@@ -30,8 +30,8 @@ func (app *Application) SetupRouter() *chi.Mux {
 		r.Use(middleware.RequireAuth(app.userStore))
 
 		r.Get("/api/me", app.authHandler.HandleMe)
-		r.Get("/deploys", app.authHandler.HandleGetDeploys)
-		r.Get("/events", app.sseHandler.HandleSSE)
+		r.Get("/api/deploys", app.authHandler.HandleGetDeploys)
+		r.Get("/api/events", app.sseHandler.HandleSSE)
 
 	})
 	r.Post("/test/broadcast", func(w http.ResponseWriter, r *http.Request) {

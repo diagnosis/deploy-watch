@@ -46,7 +46,7 @@ export const appClient = {
 
     getDeployEvents: async () => {
         const res = await apiClient.get<ApiResponse<{ deploys: DeployEvent[] }>>(
-            "/deploys"
+            "/api/deploys"
         );
         return res.data.data.deploys;
     },

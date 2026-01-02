@@ -2,7 +2,6 @@ package handler
 
 import (
 	"encoding/json"
-	"fmt"
 	"net/http"
 
 	"github.com/diagnosis/deploy-watch/internal/apperror"
@@ -95,15 +94,9 @@ func (h *WebhookHandler) HandleWebhook(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Broadcast to user's SSE
-	message := fmt.Sprintf("🚀 %s pushed to %s/%s - %s (%s)",
-		deployEvent.Author,
-		deployEvent.RepoName,
-		deployEvent.Branch,
-		deployEvent.CommitMessage,
-		deployEvent.CommitSHA[:7],
-	)
 
-	h.broadcaster.BroadcastToUser(user.ID, message)
+	deployJSON, _ := json.Marshal(deployEvent) // ✅ Send the whole deploy object!
+	h.broadcaster.BroadcastToUser(user.ID, string(deployJSON))
 
 	logger.Info(ctx, "webhook processed", "repo", deployEvent.RepoName, "user_id", user.ID)
 	helper.RespondMessage(w, r, 200, "ok")
