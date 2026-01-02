@@ -12,6 +12,7 @@ primary_region = 'sjc'
 
 [env]
   PORT = '8080'
+  APP_ENV = 'prod'
 
 [http_service]
   internal_port = 8080
