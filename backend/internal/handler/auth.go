@@ -2,6 +2,7 @@ package handler
 
 import (
 	"net/http"
+	"os"
 
 	"github.com/diagnosis/deploy-watch/internal/apperror"
 	"github.com/diagnosis/deploy-watch/internal/auth"
@@ -114,13 +115,20 @@ func (h *AuthHandler) HandleCallback(w http.ResponseWriter, r *http.Request) {
 		HttpOnly: true,
 		SameSite: http.SameSiteLaxMode,
 	})
-
-	http.Redirect(w, r, "/", http.StatusSeeOther)
+	frontendURL := os.Getenv("FRONTEND_URL")
+	if frontendURL == "" {
+		frontendURL = "http://localhost:5173" // Default for dev
+	}
+	http.Redirect(w, r, frontendURL, http.StatusSeeOther)
 }
 
 func (h *AuthHandler) HandleLogout(w http.ResponseWriter, r *http.Request) {
 	auth.ClearSessionCookie(w)
-	http.Redirect(w, r, "/", http.StatusSeeOther)
+	frontendURL := os.Getenv("FRONTEND_URL")
+	if frontendURL == "" {
+		frontendURL = "http://localhost:5173" // Default for dev
+	}
+	http.Redirect(w, r, frontendURL, http.StatusSeeOther)
 }
 
 func (h *AuthHandler) HandleMe(w http.ResponseWriter, r *http.Request) {
