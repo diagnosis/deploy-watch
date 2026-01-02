@@ -49,5 +49,6 @@ func ClearSessionCookie(w http.ResponseWriter) {
 		MaxAge:   -1,
 		SameSite: http.SameSiteNoneMode,
 		HttpOnly: true,
+		Secure:   os.Getenv("APP_ENV") == "prod",
 	})
 }

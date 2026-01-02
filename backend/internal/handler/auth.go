@@ -37,6 +37,7 @@ func (h *AuthHandler) HandleLogin(w http.ResponseWriter, r *http.Request) {
 		MaxAge:   600,
 		HttpOnly: true,
 		SameSite: http.SameSiteNoneMode,
+		Secure:   os.Getenv("APP_ENV") == "prod",
 	})
 
 	authURL := h.oauth.GetAuthURL(state)
@@ -114,6 +115,7 @@ func (h *AuthHandler) HandleCallback(w http.ResponseWriter, r *http.Request) {
 		MaxAge:   -1,
 		HttpOnly: true,
 		SameSite: http.SameSiteNoneMode,
+		Secure:   os.Getenv("APP_ENV") == "prod",
 	})
 	frontendURL := os.Getenv("FRONTEND_URL")
 	if frontendURL == "" {

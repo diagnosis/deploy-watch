@@ -53,8 +53,11 @@ export const appClient = {
 
     getLoginUrl: () => `${API_URL}/auth/github/login`,
 
-    logout: async () => {
-        await apiClient.post("/auth/logout");
-        window.location.href = "/";  // ✅ Redirect to home
+    logout: () => {
+        const form = document.createElement('form');
+        form.method = 'POST';
+        form.action = `${API_URL}/auth/logout`;
+        document.body.appendChild(form);
+        form.submit();
     }
 };

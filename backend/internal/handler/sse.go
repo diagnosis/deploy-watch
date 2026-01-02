@@ -3,6 +3,7 @@ package handler
 import (
 	"fmt"
 	"net/http"
+	"time"
 
 	"github.com/diagnosis/deploy-watch/internal/apperror"
 	"github.com/diagnosis/deploy-watch/internal/helper"
@@ -27,10 +28,6 @@ func (h *SSEHandler) HandleSSE(w http.ResponseWriter, r *http.Request) {
 		logger.Error(ctx, "user not authorized")
 		return
 	}
-	//headers
-	w.Header().Set("Content-Type", "text/event-stream")
-	w.Header().Set("Connection", "keep-alive")
-	w.Header().Set("Cache-Control", "no-cache")
 
 	flusher, ok := w.(http.Flusher)
 	if !ok {
@@ -38,6 +35,17 @@ func (h *SSEHandler) HandleSSE(w http.ResponseWriter, r *http.Request) {
 		helper.RespondError(w, r, apperror.BadRequest("stream not supported"))
 		return
 	}
+
+	origin := r.Header.Get("Origin")
+	if origin != "" {
+		w.Header().Set("Access-Control-Allow-Origin", origin)
+		w.Header().Set("Access-Control-Allow-Credentials", "true")
+	}
+
+	w.Header().Set("Content-Type", "text/event-stream")
+	w.Header().Set("Cache-Control", "no-cache, no-transform")
+	w.Header().Set("X-Accel-Buffering", "no")
+
 	client := &sse.Client{
 		UserID: user.ID,
 		Send:   make(chan string),
@@ -46,12 +54,24 @@ func (h *SSEHandler) HandleSSE(w http.ResponseWriter, r *http.Request) {
 	h.broadcaster.Register(client)
 	defer h.broadcaster.Unregister(client)
 
+	logger.Info(ctx, "SSE client connected", "user_id", user.ID.String())
+
+	fmt.Fprintf(w, ":ok\n\n")
+	flusher.Flush()
+
+	ticker := time.NewTicker(15 * time.Second)
+	defer ticker.Stop()
+
 	for {
 		select {
 		case <-ctx.Done():
-			logger.Warn(ctx, "channel closed")
+			logger.Info(ctx, "SSE client disconnected", "user_id", user.ID.String())
 			return
+		case <-ticker.C:
+			fmt.Fprintf(w, ":keepalive\n\n")
+			flusher.Flush()
 		case event := <-client.Send:
+			logger.Debug(ctx, "sending SSE event", "user_id", user.ID.String(), "event", event)
 			fmt.Fprintf(w, "data: %s\n\n", event)
 			flusher.Flush()
 		}
