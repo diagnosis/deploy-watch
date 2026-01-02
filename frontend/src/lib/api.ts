@@ -54,6 +54,10 @@ export const appClient = {
     getLoginUrl: () => `${API_URL}/auth/github/login`,
 
     logout: () => {
-        window.location.href = `${API_URL}/auth/logout`;
+        const form = document.createElement('form');
+        form.method = 'POST';
+        form.action = `${API_URL}/auth/logout`;
+        document.body.appendChild(form);
+        form.submit();
     }
 };
