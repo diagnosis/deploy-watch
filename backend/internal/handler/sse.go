@@ -3,6 +3,7 @@ package handler
 import (
 	"fmt"
 	"net/http"
+	"time"
 
 	"github.com/diagnosis/deploy-watch/internal/apperror"
 	"github.com/diagnosis/deploy-watch/internal/helper"
@@ -27,10 +28,11 @@ func (h *SSEHandler) HandleSSE(w http.ResponseWriter, r *http.Request) {
 		logger.Error(ctx, "user not authorized")
 		return
 	}
-	//headers
+
 	w.Header().Set("Content-Type", "text/event-stream")
 	w.Header().Set("Connection", "keep-alive")
 	w.Header().Set("Cache-Control", "no-cache")
+	w.Header().Set("X-Accel-Buffering", "no")
 
 	flusher, ok := w.(http.Flusher)
 	if !ok {
@@ -38,6 +40,7 @@ func (h *SSEHandler) HandleSSE(w http.ResponseWriter, r *http.Request) {
 		helper.RespondError(w, r, apperror.BadRequest("stream not supported"))
 		return
 	}
+
 	client := &sse.Client{
 		UserID: user.ID,
 		Send:   make(chan string),
@@ -46,11 +49,20 @@ func (h *SSEHandler) HandleSSE(w http.ResponseWriter, r *http.Request) {
 	h.broadcaster.Register(client)
 	defer h.broadcaster.Unregister(client)
 
+	fmt.Fprintf(w, ": connected\n\n")
+	flusher.Flush()
+
+	ticker := time.NewTicker(15 * time.Second)
+	defer ticker.Stop()
+
 	for {
 		select {
 		case <-ctx.Done():
 			logger.Warn(ctx, "channel closed")
 			return
+		case <-ticker.C:
+			fmt.Fprintf(w, ": keepalive\n\n")
+			flusher.Flush()
 		case event := <-client.Send:
 			fmt.Fprintf(w, "data: %s\n\n", event)
 			flusher.Flush()
